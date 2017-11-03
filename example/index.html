@@ -1,4 +1,11 @@
-<html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>FiFoList Example</title>
+    <meta name="description" content="FiFoList Example">
+    <meta name="author" content="JasterStary">
+  </head>
   <body>
     <div id="counter"></div>
     <hr>
@@ -9,47 +16,70 @@
     &nbsp;
     <a href="javascript://" onclick="$('#listing1').FiFoList({goto:'end'});" class="ffScroll" >goto end</a>
     &nbsp;
-    <a href="javascript://" onclick="$('#listing1').FiFoList({longpolling:'start'});" class="lpStopped" >start</a>
+    <a href="javascript://" onclick="$('#listing1').data('longpolling').start();" class="lpStopped" >start</a>
     &nbsp;
-    <a href="javascript://" onclick="$('#listing1').FiFoList({longpolling:'stop'});" class="lpRunning" >stop</a>
+    <a href="javascript://" onclick="$('#listing1').data('longpolling').stop();" class="lpRunning" >stop</a>
     &nbsp;
-    <a href="javascript://" onclick="$('#listing1').FiFoList({longpolling:'restart'});" class="lpRunning" >restart</a>
-    <!-- Plugin depends on jQuery: -->
+    <a href="javascript://" onclick="$('#listing1').data('longpolling').stop().start();" class="lpRunning" >restart</a>
+
     <script
 			  src="https://code.jquery.com/jquery-3.2.1.min.js"
 			  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
 			  crossorigin="anonymous"></script>
 
     <script type="text/javascript" src="../fifolist.jquery.js" ></script>
-    <!-- Optional, if we want to use longpolling option: -->
     <script type="text/javascript" src="../../longpolling/neverending-streaming.js" ></script>
-    
     <script type="text/javascript" >
-      $('#listing1').FiFoList({
-        'maxListLength': false, // never remove from list
-        'onEmpty': function() { // if list is empty, lets hide some buttons
+    (function($, window){
+
+      var fifolist = $.FiFoList('#listing1', {
+        'maxListLength': false, // If number, after that length the listing lines start disapear - first in first out.
+        'prepend': false, // new lines could be appended or prepended.
+        'onEmpty': function() { // Default is to trigger jquery event "fifolist-empty"
           $('.ffScroll').hide();
         },
-        'onOverflow': function() { // if list started to overflow, lets show some buttons
+        'onOverflow': function() { // Default is to trigger jquery event "fifolist-overflow"
           $('.ffScroll').show();
         },
-        'longpolling': { // longpolling will populate the list
-          // following are options for AjaxNeverendingStreaming class:
-          'url': '../../longpolling/example/get.php',
-          'maxTurns': 1, // dont repeat requests
-          'onChunk': function(chunk, detail) { // on chunk received, we can display some info.
-            $('#counter').html(Math.round(detail.time / 1000) + ' seconds, ' + detail.chunk + ' lines');
-          },
-          'onRequest': function() { // when request begins, we can show/hide some buttons
-            $('.lpStopped').hide();
-            $('.lpRunning').show();
-          },
-          'onComplete': function() { // when request ends, we can show/hide some buttons
-            $('.lpRunning').hide();
-            $('.lpStopped').show();
-          }
+        'onUser': function() { // Default is to trigger jquery event "fifolist-user"
+
+        },
+        'onAuto': function() { // Default is to trigger jquery event "fifolist-auto"
+
         }
       });
+
+      var longpolling = new AjaxNeverendingStreaming('../../longpolling/example/get.php', {
+        'maxTurns': 1,  // number of repeatedly called requests
+        'tag': 'chunk', // tag used as delimiter of chunks from server
+        'interval': 500, // interval at which response from server is parsed
+        'useJSON': false, // server is sending JSON chunks wrapped to tag.
+        'stopped': true, // initially stopped. Could be started with method "start". Default is false.
+        'onChunk': function(chunk, detail) { // Default is to trigger jquery event "longpolling-chunk"
+          fifolist.add(chunk);
+          $('#counter').html(Math.round(detail.time / 1000) + ' seconds, ' + fifolist.count() + ' lines');
+        },
+        'onRequest': function(detail) { // Default is to trigger jquery event "longpolling-request"
+          fifolist.clear();
+          $('.lpStopped').hide();
+          $('.lpRunning').show();
+        },
+        'onComplete': function(detail) { // Default is to trigger jquery event "longpolling-complete"
+          $('.lpRunning').hide();
+          $('.lpStopped').show();
+        },
+        'onError': function(detail){}, // Default is to trigger jquery event "longpolling-error"
+        'onAbort': function(detail){}, // Default is to trigger jquery event "longpolling-abort"
+        'onSuccess': function(detail){}, // Default is to trigger jquery event "longpolling-success"
+        'onAllDone': function(detail){} // Default is to trigger jquery event "longpolling-all-done"
+      });
+      $('#listing1').data('longpolling', longpolling);
+
+      // initially show only "start" button:
+      $('.lpRunning').hide();
+      $('.ffScroll').hide();
+
+    })($, window);
     </script>
   </body>
 </html>
