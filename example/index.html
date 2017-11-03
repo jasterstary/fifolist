@@ -14,34 +14,37 @@
     <a href="javascript://" onclick="$('#listing1').FiFoList({longpolling:'stop'});" class="lpRunning" >stop</a>
     &nbsp;
     <a href="javascript://" onclick="$('#listing1').FiFoList({longpolling:'restart'});" class="lpRunning" >restart</a>
-
+    <!-- Plugin depends on jQuery: -->
     <script
 			  src="https://code.jquery.com/jquery-3.2.1.min.js"
 			  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
 			  crossorigin="anonymous"></script>
 
     <script type="text/javascript" src="../fifolist.jquery.js" ></script>
+    <!-- Optional, if we want to use longpolling option: -->
     <script type="text/javascript" src="../../longpolling/neverending-streaming.js" ></script>
+    
     <script type="text/javascript" >
-      var element = $('#listing1').FiFoList({
-        'maxListLength': false,
-        'onEmpty': function() {
+      $('#listing1').FiFoList({
+        'maxListLength': false, // never remove from list
+        'onEmpty': function() { // if list is empty, lets hide some buttons
           $('.ffScroll').hide();
         },
-        'onOverflow': function() {
+        'onOverflow': function() { // if list started to overflow, lets show some buttons
           $('.ffScroll').show();
         },
-        'longpolling': {
+        'longpolling': { // longpolling will populate the list
+          // following are options for AjaxNeverendingStreaming class:
           'url': '../../longpolling/example/get.php',
-          'maxTurns': 1,
-          'onChunk': function(chunk, detail) {
+          'maxTurns': 1, // dont repeat requests
+          'onChunk': function(chunk, detail) { // on chunk received, we can display some info.
             $('#counter').html(Math.round(detail.time / 1000) + ' seconds, ' + detail.chunk + ' lines');
           },
-          'onRequest': function() {
+          'onRequest': function() { // when request begins, we can show/hide some buttons
             $('.lpStopped').hide();
             $('.lpRunning').show();
           },
-          'onComplete': function() {
+          'onComplete': function() { // when request ends, we can show/hide some buttons
             $('.lpRunning').hide();
             $('.lpStopped').show();
           }
