@@ -1,8 +1,14 @@
 # fifolist
-jquery plugin
-
-# neverending-streaming
-
+jquery plugin.
+It changes element to the list of lines, which could be continually growing.
+Without users intervence, the list is following added lines - its scrolling to the last one added.
+If user scrolls this list somewhere, list is respecting that position, until it is scrolled again to the end.
+Then it starts following added lines.
+There is also available method "goto" for direct scrolling to the beginning or to the end of list.
+After configured amount of lines is reached, oldest lines start disapear - first in first out.
+This feature is initially switched off.
+Lines also could be prepended to the beginning, instead to the end of list.
+In such case, all user interaction is reverted accordingly.
 
 
 Usage:
