@@ -1,6 +1,6 @@
 /*!
  * FiFoList
- * Version 1.0.0-2017.11.02
+ * Version 1.0.1-2017.11.02
  * Requires jquery
  *
  * Examples at: https://github.com/jasterstary/fifolist/tree/master/example
@@ -23,18 +23,47 @@
     this._closed = false;
     this._somewhere = false;
     this._lp = false;
+    this._status = 3; // overflow & user, so at start are triggered onEmpty and onAuto functions.
 
     this._onEmpty = function(){
-      $(this.element).trigger('fifolist-empty');
+      $(this.element).trigger('fifolist-empty', {'count': this._listing.length});
     };
     this._onOverflow = function(){
-      $(this.element).trigger('fifolist-overflow');
+      $(this.element).trigger('fifolist-overflow', {'count': this._listing.length});
     };
     this._onUser = function(){
-      $(this.element).trigger('fifolist-user');
+      $(this.element).trigger('fifolist-user', {});
     };
     this._onAuto = function(){
-      $(this.element).trigger('fifolist-auto');
+      $(this.element).trigger('fifolist-auto', {});
+    };
+
+    this._onceUser = function(){
+      if ((this._status&2) == 0)  {
+        this._onUser();
+        this._status = this._status | 2;
+      }
+    };
+
+    this._onceAuto = function(){
+      if ((this._status&2) == 2)  {
+        this._onAuto();
+        this._status = this._status & ~2;
+      }
+    };
+
+    this._onceOverflow = function(){
+      if ((this._status&1) == 0)  {
+        this._onOverflow();
+        this._status = this._status | 1;
+      }
+    };
+
+    this._onceEmpty = function(){
+      if ((this._status&1) == 1)  {
+        this._onEmpty();
+        this._status = this._status & ~1;
+      }
     };
 
     this._drawLine = function(theLine) {
@@ -43,16 +72,23 @@
       if (that.prepend) {
         insertFunc = 'prependTo';
       };
+      var container = that.element;
       switch(this._tag){
         case 'UL':
         case 'OL':
           var tag = '<li>';
         break;
+        case 'TABLE':
+        case 'TBODY':
+          var tag = '<tr>';
+          container = $(tag)[insertFunc](container);
+          tag = '<td>';
+        break;
         default:
           var tag = '<div>';
         break;
       };
-      var el = $(tag)[insertFunc](that.element);
+      var el = $(tag)[insertFunc](container);
       el.text(theLine);
       that._listing.push(el);
       that._focus(el);
@@ -66,8 +102,10 @@
       var $el = $(el);
       var $container = $(that.element);
       if ($container[0].scrollHeight > $container.height()) {
-        that._onOverflow();
-      };
+        that._onceOverflow();
+      } else {
+        that._onceEmpty();
+      }
       if (this._userMoving) {
         if (this.prepend) {
           that._selfMoving = true;
@@ -108,6 +146,7 @@
             if (that.prepend) {
               that._userMoving = false;
             };
+            that._who();
           });
         break;
         case 'end':
@@ -121,19 +160,23 @@
               that._userMoving = false;
             };
             that._selfMoving = false;
+            that._who();
           });
         break;
       }
-      if (that._userMoving) {
-        that._onUser();
-      } else {
-        that._onAuto();
-      }
     };
+
+    this._who = function() {
+      if (that._userMoving) {
+        that._onceUser();
+      } else {
+        that._onceAuto();
+      }
+    },
 
     this._clear = function() {
       $(that.element).empty();
-      that._onEmpty();
+      that._onceEmpty();
     };
 
     this._destroy = function() {
@@ -143,52 +186,13 @@
       $(that.element).removeData('plugin_' + pluginName);
     };
 
-    this._longpolling = function(options) {
-      if ((that._lp) && (typeof options == 'string')) {
-        switch(options){
-          case 'start':
-            that._clear();
-            that._lp.start();
-          break;
-          case 'stop':
-            that._lp.stop();
-          break;
-          case 'resume':
-            that._lp.resume();
-          break;
-          case 'restart':
-            that._lp.stop();
-            that._clear();
-            that._lp.start();
-          break;
-          case 'destroy':
-            that._lp.destroy();
-            that._lp = false;
-          break;
-        }
-      };
-      if (typeof options == 'object') {
-        if (that._lp) {
-          that._lp.destroy();
-          that._lp = false;
-        };
-        that._clear();
-        var func = function(){};
-        if (typeof options.onChunk == 'function') {
-          func = options.onChunk;
-        }
-        options.onChunk = function(chunk, detail) {
-          func(chunk, detail);
-          that._drawLine(chunk);
-        };
-        that._lp = new AjaxNeverendingStreaming(options.url, options);
-      };
-    },
-
     this._api = function() {
       return {
         add: function(line) {
           that._drawLine(line);
+        },
+        count: function() {
+          return that._listing.length;
         },
         clear: function() {
           that._clear();
@@ -226,9 +230,6 @@
           if (typeof options.onAuto == 'function') {
             that._onAuto = options.onAuto;
           };
-          if ((typeof options.longpolling == 'object')||(typeof options.longpolling == 'string')) {
-            that._longpolling(options.longpolling);
-          };
         }
       };
     };
@@ -258,6 +259,7 @@
           that._somewhere = true;
         };
         that._userMoving = that._somewhere;
+        that._who();
       });
 
     };
@@ -283,7 +285,7 @@
 
   $[pluginName] = function ( element, options ) {
     if (!$(element).data('plugin_' + pluginName)) {
-        var o = new Plugin(element);
+        var o = new Plugin($(element));
         var api = o._api();
         api.go(options);
         $(element).data('plugin_' + pluginName, api);
