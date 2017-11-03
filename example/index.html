@@ -1,0 +1,52 @@
+<html>
+  <body>
+    <div id="counter"></div>
+    <hr>
+    <div id="listing1" style="height:60px;overflow:auto;" >
+    </div>
+    <hr>
+    <a href="javascript://" onclick="$('#listing1').FiFoList({goto:'start'});" class="ffScroll" >goto start</a>
+    &nbsp;
+    <a href="javascript://" onclick="$('#listing1').FiFoList({goto:'end'});" class="ffScroll" >goto end</a>
+    &nbsp;
+    <a href="javascript://" onclick="$('#listing1').FiFoList({longpolling:'start'});" class="lpStopped" >start</a>
+    &nbsp;
+    <a href="javascript://" onclick="$('#listing1').FiFoList({longpolling:'stop'});" class="lpRunning" >stop</a>
+    &nbsp;
+    <a href="javascript://" onclick="$('#listing1').FiFoList({longpolling:'restart'});" class="lpRunning" >restart</a>
+
+    <script
+			  src="https://code.jquery.com/jquery-3.2.1.min.js"
+			  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+			  crossorigin="anonymous"></script>
+
+    <script type="text/javascript" src="../fifolist.jquery.js" ></script>
+    <script type="text/javascript" src="../../longpolling/neverending-streaming.js" ></script>
+    <script type="text/javascript" >
+      var element = $('#listing1').FiFoList({
+        'maxListLength': false,
+        'onEmpty': function() {
+          $('.ffScroll').hide();
+        },
+        'onOverflow': function() {
+          $('.ffScroll').show();
+        },
+        'longpolling': {
+          'url': '../../longpolling/example/get.php',
+          'maxTurns': 1,
+          'onChunk': function(chunk, detail) {
+            $('#counter').html(Math.round(detail.time / 1000) + ' seconds, ' + detail.chunk + ' lines');
+          },
+          'onRequest': function() {
+            $('.lpStopped').hide();
+            $('.lpRunning').show();
+          },
+          'onComplete': function() {
+            $('.lpRunning').hide();
+            $('.lpStopped').show();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
