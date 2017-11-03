@@ -32,7 +32,7 @@
     <script type="text/javascript" src="../../longpolling/neverending-streaming.js" ></script>
     <script type="text/javascript" >
     (function($, window){
-
+      /* UI element FiFoList: */
       var fifolist = $.FiFoList('#listing1', {
         'maxListLength': false, // If number, after that length the listing lines start disapear - first in first out.
         'prepend': false, // new lines could be appended or prepended.
@@ -50,6 +50,7 @@
         }
       });
 
+      /* Ajax connector to the server: */
       var longpolling = new AjaxNeverendingStreaming('../../longpolling/example/get.php', {
         'maxTurns': 1,  // number of repeatedly called requests
         'tag': 'chunk', // tag used as delimiter of chunks from server
@@ -57,15 +58,19 @@
         'useJSON': false, // server is sending JSON chunks wrapped to tag.
         'stopped': true, // initially stopped. Could be started with method "start". Default is false.
         'onChunk': function(chunk, detail) { // Default is to trigger jquery event "longpolling-chunk"
+	  // adding lines to the FiFoList UI:
           fifolist.add(chunk);
+	  // display some info in the counter:
           $('#counter').html(Math.round(detail.time / 1000) + ' seconds, ' + fifolist.count() + ' lines');
         },
         'onRequest': function(detail) { // Default is to trigger jquery event "longpolling-request"
           fifolist.clear();
+	  // hide button "start", because we are running yet:
           $('.lpStopped').hide();
           $('.lpRunning').show();
         },
         'onComplete': function(detail) { // Default is to trigger jquery event "longpolling-complete"
+	  // show button "start" again:
           $('.lpRunning').hide();
           $('.lpStopped').show();
         },
@@ -74,6 +79,7 @@
         'onSuccess': function(detail){}, // Default is to trigger jquery event "longpolling-success"
         'onAllDone': function(detail){} // Default is to trigger jquery event "longpolling-all-done"
       });
+      // bind connector on the element, so it is comfortly accessible from buttons:
       $('#listing1').data('longpolling', longpolling);
 
       // initially show only "start" button:
