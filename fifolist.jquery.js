@@ -1,6 +1,6 @@
 /*!
  * FiFoList
- * Version 1.0.1-2017.11.02
+ * Version 1.0.0-2017.11.02
  * Requires jquery
  *
  * Examples at: https://github.com/jasterstary/fifolist/tree/master/example
@@ -176,6 +176,7 @@
 
     this._clear = function() {
       $(that.element).empty();
+      that._listing = [];
       that._onceEmpty();
     };
 
@@ -199,6 +200,9 @@
         },
         destroy: function() {
           that._destroy();
+        },
+        goto: function(where) {
+          that._goto(where);
         },
         go: function(options) {
           if (typeof options.maxListLength == 'number') {
