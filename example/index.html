@@ -60,8 +60,10 @@
         'onChunk': function(chunk, detail) { // Default is to trigger jquery event "longpolling-chunk"
 	  // adding lines to the FiFoList UI:
           fifolist.add(chunk);
+        },
+        'onProgress': function(detail) { // Default is to trigger jquery event "longpolling-progress"
 	  // display some info in the counter:
-          $('#counter').html(Math.round(detail.time / 1000) + ' seconds, ' + fifolist.count() + ' lines');
+	  $('#counter').html(Math.round(detail.time / 1000) + ' seconds, ' + fifolist.count() + ' lines, received: ' + detail.received);
         },
         'onRequest': function(detail) { // Default is to trigger jquery event "longpolling-request"
           fifolist.clear();
