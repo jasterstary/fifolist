@@ -1,6 +1,6 @@
 /*!
  * FiFoList
- * Version 1.0.0-2017.11.02
+ * Version 1.0.1-2017.12.08
  * Requires jquery
  *
  * Examples at: https://github.com/jasterstary/fifolist/tree/master/example
@@ -16,6 +16,8 @@
     this.element = element;
     this.maxListLength = 0;
     this.prepend = false;
+    
+    that._fast = false;
 
     this._listing = [];
     this._selfMoving = false;
@@ -115,21 +117,42 @@
         };
         return false;
       }
+      
+      if (that._selfMoving) {
+        $container.stop(true);
+        that._selfMoving = false;
+        that._fast = true;
+      };
+      
       that._selfMoving = true;
       if (that.prepend) {
         that._userMoving = false;
+
+        if (that._fast) {
+          $container.scrollTop(0);
+          that._selfMoving = false;
+        } else {
+          $container.animate({
+            scrollTop: 0
+          }, function(){
+            that._selfMoving = false;
+          });
+        }
+
+        return true;
+      };
+      
+      if (that._fast) {
+        $container.scrollTop(($el.offset().top - $container.offset().top + $container.scrollTop()));
+        that._selfMoving = false;
+      } else {
         $container.animate({
-          scrollTop: 0
+          scrollTop: ($el.offset().top - $container.offset().top + $container.scrollTop())
         }, function(){
           that._selfMoving = false;
         });
-        return true;
-      };
-      $container.animate({
-        scrollTop: ($el.offset().top - $container.offset().top + $container.scrollTop())
-      }, function(){
-        that._selfMoving = false;
-      });
+      }
+
       return true;
     };
 
@@ -240,26 +263,21 @@
 
     this.init = function() {
       this._tag = $(that.element).prop("tagName");
-      // when user scrolls list elsewhere, then on the end, we let him rule.
-      // when user scrolls to the end of list, we are scrolling again.
       $(that.element).on('scroll', function() {
         if (that._selfMoving) return false;
         if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
-          //console.log('end reached');
           if (that.prepend) {
             that._somewhere = true;
           } else {
             that._somewhere = false;
           }
         } else if(0 >= $(this).scrollTop()) {
-          //console.log('start reached');
           if (!that.prepend) {
             that._somewhere = true;
           } else {
             that._somewhere = false;
           }
         } else {
-          //console.log('somewhere else', $(this).scrollTop());
           that._somewhere = true;
         };
         that._userMoving = that._somewhere;
