@@ -1,6 +1,6 @@
 /*!
  * FiFoList
- * Version 1.0.1-2017.12.08
+ * Version 1.0.2-2018.01.30
  * Requires jquery
  *
  * Examples at: https://github.com/jasterstary/fifolist/tree/master/example
@@ -162,31 +162,41 @@
         case 'start':
           that._userMoving = true;
           that._selfMoving = true;
-          $container.animate({
-            scrollTop: 0
-          }, function(){
-            that._selfMoving = false;
-            if (that.prepend) {
-              that._userMoving = false;
-            };
-            that._who();
-          });
+          if (that._fast) {
+            $container.scrollTop(0);
+            that._done(true);
+          } else {
+            $container.animate({
+              scrollTop: 0
+            }, function(){
+              that._done(true);
+            });
+          }
         break;
         case 'end':
           that._userMoving = true;
           that._selfMoving = true;
           $el = $container.find(':last-child');
-          $container.animate({
-            scrollTop: ($el.offset().top - $container.offset().top + $container.scrollTop())
-          }, function(){
-            if (!that.prepend) {
-              that._userMoving = false;
-            };
-            that._selfMoving = false;
-            that._who();
-          });
+          if (that._fast) {
+            $container.scrollTop($el.offset().top - $container.offset().top + $container.scrollTop());
+            that._done(false);                      
+          } else {
+            $container.animate({
+              scrollTop: ($el.offset().top - $container.offset().top + $container.scrollTop())
+            }, function(){
+              that._done(false);
+            });          
+          }          
         break;
       }
+    };
+    
+    this._done = function(bStart) {
+      if (that.prepend == bStart) {
+        that._userMoving = false;
+      };
+      that._selfMoving = false;
+      that._who();    
     };
 
     this._who = function() {
